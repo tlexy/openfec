@@ -167,12 +167,14 @@ main(int argc, char* argv[])
 	params->encoding_symbol_length	= SYMBOL_SIZE;
 
 	/* Open and initialize the openfec session now... */
+	//1. 创建会话
 	if ((ret = of_create_codec_instance(&ses, codec_id, OF_ENCODER, VERBOSITY)) != OF_STATUS_OK)
 	{
 		OF_PRINT_ERROR(("of_create_codec_instance() failed\n"))
 		ret = -1;
 		goto end;
 	}
+	//2. 设置会话参数
 	if (of_set_fec_parameters(ses, params) != OF_STATUS_OK)
 	{
 		OF_PRINT_ERROR(("of_set_fec_parameters() failed for codec_id %d\n", codec_id))
@@ -184,6 +186,7 @@ main(int argc, char* argv[])
 	 * In case of a file transmission, the opposite takes place: the file is read and partitionned into a set of k source symbols.
 	 * At the end, it's just equivalent since there is a set of k source symbols that need to be sent reliably thanks to an FEC
 	 * encoding. */
+	//3. 创建指针数组，数组中每一个元素为指针，每个指针指向一个真实的内容
 	printf("\nFilling source symbols...\n");
 	if ((enc_symbols_tab = (void**) calloc(n, sizeof(void*))) == NULL) {
 		OF_PRINT_ERROR(("no memory (calloc failed for enc_symbols_tab, n=%u)\n", n))
@@ -193,6 +196,7 @@ main(int argc, char* argv[])
 	/* In order to detect corruption, the first symbol is filled with 0x1111..., the second with 0x2222..., etc.
 	 * NB: the 0x0 value is avoided since it is a neutral element in the target finite fields, i.e. it prevents the detection
 	 * of symbol corruption */
+	//4. 为每个需要发送的的内容（总共K个）分配内存，并填充数据
 	for (esi = 0; esi < k; esi++ )
 	{
 		if ((enc_symbols_tab[esi] = calloc(symb_sz_32, sizeof(UINT32))) == NULL)
@@ -209,6 +213,7 @@ main(int argc, char* argv[])
 		}
 	}
 
+	//5. 为当前会话ses构建n-k个冗余包
 	/* Now build the n-k repair symbols... */
 	printf("\nBuilding repair symbols...\n");
 	for (esi = k; esi < n; esi++)
@@ -231,6 +236,7 @@ main(int argc, char* argv[])
 		}
 	}
 
+	//6. 生成大小为n的随机数组
 	/* Randomize the packet order, it's important for LDPC-Staircase codes for instance... */
 	printf("\nRandomizing transmit order...\n");
 	if ((rand_order = (UINT32*)calloc(n, sizeof(UINT32))) == NULL)
@@ -249,6 +255,8 @@ main(int argc, char* argv[])
 		goto end;
 	}
 	printf("First of all, send the FEC OTI for this object to %s/%d\n", DEST_IP, DEST_PORT);
+
+	//7. 首先发送编码参数
 	/* Initialize and send the FEC OTI to the client */
 	/* convert back to host endianess */
 	fec_oti.codec_id	= htonl(codec_id);
@@ -280,6 +288,7 @@ main(int argc, char* argv[])
 	}
 	for (i = 0; i < n; i++)
 	{
+		//只发送lost_after_index个（随机发送lost_after_index个）
 		if (i == lost_after_index)
 		{
 			/* the remaining packets are considered as lost, exit loop */
@@ -288,6 +297,7 @@ main(int argc, char* argv[])
 		/* Add a pkt header wich only countains the ESI, i.e. a 32bits sequence number, in network byte order in order
 		 * to be portable regardless of the local and remote byte endian representation (the receiver will do the
 		 * opposite with ntohl()...) */
+		//8. 前面4字节是序号，后面的才是内容
 		*(UINT32*)pkt_with_fpi = htonl(rand_order[i]);
 		memcpy(4 + pkt_with_fpi, enc_symbols_tab[rand_order[i]], SYMBOL_SIZE);
 		printf("%05d => sending symbol %u (%s)\n", i + 1, rand_order[i], (rand_order[i] < k) ? "src" : "repair");

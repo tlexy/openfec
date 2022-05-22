@@ -113,6 +113,7 @@ main (int argc, char* argv[])
 		goto end;
 	}
 	len = sizeof(fec_oti_t);		/* size of the expected packet */
+	//1. 首先获取编解码参数
 	if ((ret = get_next_pkt(so, (void**)&fec_oti, &len)) != OF_STATUS_OK)
 	{
 		OF_PRINT_ERROR(("get_next_pkt failed (FEC OTI reception)\n"))
@@ -183,6 +184,7 @@ main (int argc, char* argv[])
 	params->nb_repair_symbols	= n - k;
 	params->encoding_symbol_length	= SYMBOL_SIZE;
 
+	//2. 创建会话
 	/* Open and initialize the openfec decoding session now that we know the various parameters used by the sender/encoder... */
 	if ((ret = of_create_codec_instance(&ses, codec_id, OF_DECODER, VERBOSITY)) != OF_STATUS_OK)
 	{
@@ -190,6 +192,7 @@ main (int argc, char* argv[])
 		ret = -1;
 		goto end;
 	}
+	//3. 设置会话参数
 	if (of_set_fec_parameters(ses, params) != OF_STATUS_OK)
 	{
 		OF_PRINT_ERROR(("of_set_fec_parameters() failed for codec_id %d\n", codec_id))
@@ -227,11 +230,13 @@ main (int argc, char* argv[])
 		}
 		recvd_symbols_tab[esi] = (char*)pkt_with_fpi + 4;	/* remember */
 		printf("%05d => receiving symbol esi=%u (%s)\n", n_received, esi, (esi < k) ? "src" : "repair");
+		//4. 每收到一组数据，就进行一次解码
 		if (of_decode_with_new_symbol(ses, (char*)pkt_with_fpi + 4, esi) == OF_STATUS_ERROR) {
 			OF_PRINT_ERROR(("of_decode_with_new_symbol() failed\n"))
 			ret = -1;
 			goto end;
 		}
+		//5. 判断解码完成，即可以恢复K个原始包的内容（需要接收到任意K个包）
 		/* check if completed in case we received k packets or more */
 		if ((n_received >= k) && (of_is_decoding_complete(ses) == true)) {
 			/* done, we recovered everything, no need to continue reception */
@@ -271,6 +276,7 @@ main (int argc, char* argv[])
 #endif
 	if (!done && (ret == OF_STATUS_FAILURE) && (n_received >= k))
 	{
+		//6. 前面失败后，这里做最后的努力，但对RS码来说是无用的
 		/* there's no packet any more but we received at least k, and the use of of_decode_with_new_symbol() didn't succedd to decode,
 		 * so try with of_finish_decoding.
 		 * NB: this is useless with MDS codes (e.g. Reed-Solomon), but it is essential with LDPC-Staircase as of_decode_with_new_symbol
