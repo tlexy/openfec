@@ -57,6 +57,16 @@
 #endif
 #include "of_debug.h"
 
+#if defined(_WIN32)	/* but also for others, e.g. sun... */
+#define NEED_BCOPY
+#define bcmp(a,b,n) memcmp(a,b,n)
+#endif
+
+#ifdef NEED_BCOPY
+#define bcopy(s, d, siz)        memcpy((d), (s), (siz))
+#define bzero(d, siz)   memset((d), '\0', (siz))
+#endif
+
 
 /****** OpenFEC.org general definitions ***********************************************************/
 

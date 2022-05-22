@@ -374,8 +374,9 @@ of_status_t	of_rs_2_m_finish_decoding (of_rs_2_m_cb_t*	ofcb)
 {
 	UINT32 		k;
 	UINT32 		n;
-	char		*tmp_buf[ofcb->nb_source_symbols];/* keep available source/repair symbol buffers here... */
-	int		tmp_esi[ofcb->nb_source_symbols]; /* ...and their esi here. In fact we only need k entries
+	//char		*tmp_buf[ofcb->nb_source_symbols];/* keep available source/repair symbol buffers here... */
+	//int		tmp_esi[ofcb->nb_source_symbols]; 
+	/* ...and their esi here. In fact we only need k entries
 							   * in these tables, but in order to avoid using malloc (time
 							   * consumming), we use an automatic table of maximum size for
 							   * both tmp_buf[] and tmp_esi[]. */
@@ -419,6 +420,14 @@ of_status_t	of_rs_2_m_finish_decoding (of_rs_2_m_cb_t*	ofcb)
 	{
 		goto no_mem;
 	}
+
+	char** tmp_buf = (char**)malloc(sizeof(char*) * ofcb->nb_source_symbols);//ofcb->nb_source_symbols/* keep available source/repair symbol buffers here... */
+	int* tmp_esi = (int*)malloc(sizeof(int) * ofcb->nb_source_symbols); //ofcb->nb_source_symbols
+	if (tmp_buf == NULL || tmp_esi == NULL)
+	{
+		goto no_mem;
+	}
+
 	/* Then remember the location of each symbol buffer */
 	for (tmp_idx = 0, off = 0; tmp_idx < k; tmp_idx++, off += ofcb->encoding_symbol_length) {
 		tmp_buf[tmp_idx] = large_buf + off;

@@ -70,12 +70,19 @@ static void	dump_buffer_32 (void	*buf,
 				UINT32	len32);
 
 
+#pragma comment(lib,"ws2_32.lib")
+
 /*************************************************************************************************/
 
 
 int
 main (int argc, char* argv[])
 {
+#if defined(_WIN32)
+	WSADATA wsa;
+	WSAStartup(MAKEWORD(2, 2), &wsa);
+#endif
+
 	of_codec_id_t	codec_id;				/* identifier of the codec to use */
 	of_session_t	*ses 		= NULL;			/* openfec codec instance identifier */
 	of_parameters_t	*params		= NULL;			/* structure used to initialize the openfec session */
@@ -310,7 +317,11 @@ end:
 	/* Cleanup everything... */
 	if (so!= INVALID_SOCKET)
 	{
+#ifdef _WIN32
+		closesocket(so);
+#else
 		close(so);
+#endif // _WIN32
 	}
 	if (ses)
 	{
@@ -343,6 +354,9 @@ end:
 		free(recvd_symbols_tab);
 		free(src_symbols_tab);
 	}
+#if defined(_WIN32)
+	WSACleanup();
+#endif
 	return ret;
 }
 
@@ -409,11 +423,13 @@ get_next_pkt   (SOCKET		so,
 			return OF_STATUS_ERROR;
 		}
 		/* set the non blocking mode for this socket now that the flow has been launched */
+#ifndef _WIN32
 		if (fcntl(so, F_SETFL, O_NONBLOCK) < 0)
 		{
 			OF_PRINT_ERROR(("ERROR, fcntl failed to set non blocking mode\n"))
 			exit(-1);
 		}
+#endif
 		if (VERBOSITY > 1)
 			printf("%s: pkt received 0, len=%u\n", __FUNCTION__, *len);
 		return OF_STATUS_OK;

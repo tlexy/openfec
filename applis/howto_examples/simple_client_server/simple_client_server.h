@@ -35,16 +35,21 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <errno.h> 
 #include <ctype.h>
 #include <sys/types.h>
+#include <stdint.h>
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#include <winsock2.h>
+#else 
+#include <unistd.h>
 #include <sys/socket.h>
-
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/time.h>	/* for gettimeofday */
+#endif
 
 #include "../../../src/lib_common/of_openfec_api.h"
 
@@ -56,8 +61,12 @@
 #define SOCKADDR_IN	struct sockaddr_in
 #define INVALID_SOCKET	(-1)
 #define SOCKET_ERROR	(-1)
-#define closesocket	close
+
+#ifdef _WIN32
+#define SLEEP(t)	Sleep(t*1000)
+#else
 #define SLEEP(t)	usleep(t*1000)
+#endif
 
 
 /*
