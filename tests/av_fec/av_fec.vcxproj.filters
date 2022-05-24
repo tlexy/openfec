@@ -17,12 +17,18 @@
     <ClCompile Include="core\av_fec.cpp">
       <Filter>core</Filter>
     </ClCompile>
+    <ClCompile Include="core\av_fec_decode.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="core\av_fec.h">
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="core\fec_symbol_def.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\av_fec_decode.h">
       <Filter>core</Filter>
     </ClInclude>
   </ItemGroup>

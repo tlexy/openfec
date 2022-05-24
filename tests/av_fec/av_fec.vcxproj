@@ -142,10 +142,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="core\av_fec.cpp" />
+    <ClCompile Include="core\av_fec_decode.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="core\av_fec.h" />
+    <ClInclude Include="core\av_fec_decode.h" />
     <ClInclude Include="core\fec_symbol_def.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
