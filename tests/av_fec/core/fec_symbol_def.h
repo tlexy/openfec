@@ -5,6 +5,7 @@ struct FecSymbolInUnit
 {
 	void* buf;
 	int len;
+	int pos;//解码时才有用
 };
 
 struct FecSymbolOutUnit

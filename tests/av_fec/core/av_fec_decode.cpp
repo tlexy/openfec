@@ -15,72 +15,31 @@ AvFecDecode::AvFecDecode(int src_count, int repair_count)
 	//_rs_param->encoding_symbol_length = SYMBOL_SIZE;
 }
 
-bool AvFecDecode::add_symbols(const std::shared_ptr<std::list<FecSymbolInUnit>> symbols)
+bool AvFecDecode::add_symbols_and_decode(const std::shared_ptr<std::list<FecSymbolInUnit>> symbols)
 {
-	if (symbols->size() != _src_count)
+	if (symbols->size() != _src_count || symbols->size() < 1)
 	{
 		return false;
 	}
-	_ori_symbols = symbols;
-	//找出最大值
-	int max = 0;
+	_enc_symbols = symbols;
+	int slen = symbols->begin()->len;
 	for (auto it = symbols->begin(); it != symbols->end(); ++it)
 	{
-		if (it->len > max)
+		if (slen != it->len)
 		{
-			max = it->len;
+			return false;
 		}
 	}
-	int slen = max / 4;
-	slen = slen * 4;//必须为32位的整数倍
-	if (slen < max)
-	{
-		slen += 4;
-	}
+	_symbol_num = slen;
 	//设置参数
 	_rs_param.encoding_symbol_length = slen;
-
-	//将数据复制到内存buffer
-	int index = 0;
-	for (auto it = symbols->begin(); it != symbols->end(); ++it)
-	{
-		_enc_symbols_tab[index++] = calloc(slen, 1);
-		memcpy(_enc_symbols_tab[index-1], it->buf, it->len);
-	}
-	//冗余包申请
-	for (int i = index; i < _src_count + _repair_count; ++i)
-	{
-		_enc_symbols_tab[i] = calloc(slen, 1);
-	}
-	return true;
-}
-
-void AvFecDecode::get_decode_symbols(std::list<FecSymbolOutUnit>& symbols)
-{
-	auto it = _ori_symbols->begin();
-	for (int i = 0; i < _src_count + _repair_count; ++i)
-	{
-		FecSymbolOutUnit ou;
-		ou.len = _rs_param.encoding_symbol_length;
-		ou.buf = _enc_symbols_tab[i];
-		if (it != _ori_symbols->end())
-		{
-			ou.ori_len = it->len;
-			++it;
-		}
-		else
-		{
-			ou.ori_len = 0;//标识是一个冗余包
-		}
-
-		symbols.push_back(ou);
-	}
+	return fec_calc();
 }
 
 bool AvFecDecode::fec_calc()
 {
 	int ret = 0;
-	if ((ret = of_create_codec_instance(&_sess, _codec_id, OF_ENCODER, 0)) != OF_STATUS_OK)
+	if ((ret = of_create_codec_instance(&_sess, _codec_id, OF_DECODER, 0)) != OF_STATUS_OK)
 	{
 		return false;
 	}
@@ -89,12 +48,25 @@ bool AvFecDecode::fec_calc()
 	{
 		return false;
 	}
-	for (int i = _src_count; i < _src_count + _repair_count; ++i)
+	for (auto it = _enc_symbols->begin(); it != _enc_symbols->end(); ++it)
 	{
-		if (of_build_repair_symbol(_sess, _enc_symbols_tab, i) != OF_STATUS_OK)
+		if (of_decode_with_new_symbol(_sess, it->buf, it->pos) != OF_STATUS_OK)
 		{
 			return false;
 		}
+		if (of_is_decoding_complete(_sess) == true)
+		{
+			return true;
+		}
 	}
-	return true;
+}
+
+void AvFecDecode::get_decode_symbols(std::list<FecSymbolOutUnit>& symbols)
+{
+	_src_symbol = (void**)calloc(_src_count, sizeof(void*));
+	if (of_get_source_symbols_tab(_sess, _src_symbol) != OF_STATUS_OK)
+	{
+		return;
+	}
+	//赋值给外面的变量？？？？
 }
