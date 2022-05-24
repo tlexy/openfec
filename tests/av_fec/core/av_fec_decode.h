@@ -1,5 +1,5 @@
-﻿#ifndef AV_FEC_H
-#define AV_FEC_H
+﻿#ifndef AV_FEC_DECODE_H
+#define AV_FEC_DECODE_H
 
 
 extern "C" {
@@ -22,7 +22,6 @@ public:
 
 private:
 	of_codec_id_t _codec_id{ OF_CODEC_REED_SOLOMON_GF_2_M_STABLE };
-	//of_parameters_t _param;
 	of_rs_2_m_parameters_t _rs_param;
 	of_session_t* _sess;
 	int _src_count;
