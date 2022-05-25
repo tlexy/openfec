@@ -345,6 +345,10 @@ end:
 	{
 		for (esi = 0; esi < n; esi++)
 		{
+			//这里最多有n个对象需要删除，其中recvd_symbols_tab存放的是接收到的包（原始包与冗余包）
+			//src_symbols_tab是解码后的包（即原始包），不包含冗余包
+			//对于接收到的原始包，recvd_symbols_tab与src_symbols_tab指向同一片内存空间
+			//对于没有接收到的原始包，仅仅会在src_symbols_tab中出现，而且是经过解码后存放在一个新申请的空间里
 			if (recvd_symbols_tab[esi])
 			{
 				/* this is a symbol received from the network, without its FPI that starts 4 bytes before */

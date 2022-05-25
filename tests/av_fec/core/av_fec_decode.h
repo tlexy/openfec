@@ -18,9 +18,10 @@ public:
 
 	void get_decode_symbols(std::list<FecSymbolOutUnit>& symbols);
 
+	~AvFecDecode();
 private:
 	bool fec_calc();
-
+	void destory();
 private:
 	of_codec_id_t _codec_id{ OF_CODEC_REED_SOLOMON_GF_2_M_STABLE };
 	of_rs_2_m_parameters_t _rs_param;
@@ -28,9 +29,7 @@ private:
 	int _src_count;
 	int _repair_count;
 	int _symbol_num;
-	//编码符号表
-	void** _enc_symbols_tab;
-	void** _src_symbol;
+	void** _src_symbol{nullptr};
 	std::shared_ptr<std::list<FecSymbolInUnit>> _enc_symbols;
 };
 

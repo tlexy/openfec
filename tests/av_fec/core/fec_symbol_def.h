@@ -12,7 +12,7 @@ struct FecSymbolOutUnit
 {
 	void* buf;
 	int len;
-	int ori_len;
+	int ori_len;//编码时才有用
 };
 
 #endif

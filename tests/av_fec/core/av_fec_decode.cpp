@@ -6,8 +6,6 @@ AvFecDecode::AvFecDecode(int src_count, int repair_count)
 	:_src_count(src_count),
 	_repair_count(repair_count)
 {
-	_enc_symbols_tab = (void**)calloc(src_count + repair_count, sizeof(void*));
-
 	_rs_param.m = 8;
 
 	_rs_param.nb_source_symbols = _src_count;
@@ -68,5 +66,24 @@ void AvFecDecode::get_decode_symbols(std::list<FecSymbolOutUnit>& symbols)
 	{
 		return;
 	}
-	//赋值给外面的变量？？？？
+	for (int i = 0; i < _src_count; ++i)
+	{
+		FecSymbolOutUnit unit;
+		unit.buf = _src_symbol[i];
+		unit.len = _symbol_num;
+		symbols.push_back(unit);
+	}
+}
+
+void AvFecDecode::destory()
+{
+	if (_src_symbol)
+	{
+		free(_src_symbol);
+	}
+}
+
+AvFecDecode::~AvFecDecode()
+{
+	destory();
 }
