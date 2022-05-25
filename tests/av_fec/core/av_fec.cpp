@@ -98,3 +98,11 @@ bool AvFec::fec_calc()
 	}
 	return true;
 }
+
+AvFec::~AvFec()
+{
+	if (_enc_symbols_tab)
+	{
+		free(_enc_symbols_tab);
+	}
+}
